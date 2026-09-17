@@ -1,12 +1,24 @@
-/tmp
-/target
-/_flatpak_repo
-/_flatpak_app
-/_mesonbuild
-/.flatpak-builder
-/.editorconfig
-/*.code-workspace
-/.idea/
-*.mo
-.toggletasks.json
-*.flatpak
+```rust
+# Build artifacts
+target/
+
+# Dependencies
+vendor/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+```
