@@ -1,24 +1,17 @@
-```rust
-# Build artifacts
-target/
-
+```
 # Dependencies
-vendor/
+target/
+.cargo/
+
+# Compiled and build artifacts
+**/*.rs.bk
+**/*.rs~
 
 # Logs and temp files
 *.log
 *.tmp
 
-# Environment
-.env
-.env.local
-*.env.*
-
 # Editors
 .vscode/
 .idea/
-
-# OS
-.DS_Store
-Thumbs.db
 ```
