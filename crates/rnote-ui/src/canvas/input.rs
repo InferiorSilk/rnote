@@ -24,7 +24,6 @@ pub(crate) fn handle_pointer_controller_event(
     let touch_drawing = canvas.touch_drawing();
     let gdk_event_type = event.event_type();
     let gdk_modifiers = event.modifier_state();
-    let _gdk_device = event.device().unwrap();
     let backlog_policy = canvas.engine_ref().penholder.backlog_policy();
     let is_stylus = event_is_stylus(event);
 
@@ -302,21 +301,43 @@ fn trace_gdk_event(event: &gdk::Event) {
 
 /// Returns true if input should be rejected
 pub(crate) fn reject_pointer_input(event: &gdk::Event, touch_drawing: bool) -> bool {
-    if touch_drawing {
-        if event.device().unwrap().num_touches() > 1 {
-            return true;
-        }
-    } else {
-        let event_type = event.event_type();
-        if event.is_pointer_emulated()
-            || event_type == gdk::EventType::TouchBegin
-            || event_type == gdk::EventType::TouchUpdate
-            || event_type == gdk::EventType::TouchEnd
-            || event_type == gdk::EventType::TouchCancel
-        {
-            return true;
+    // Stylus input should never be rejected for palm rejection purposes
+    if event.device_tool().is_some() {
+        return false;
+    }
+
+    // Emulated pointer events from touch should be rejected to avoid duplicate input
+    if event.is_pointer_emulated() {
+        return true;
+    }
+
+    let event_type = event.event_type();
+
+    // Reject raw touch events when touch drawing is disabled
+    if !touch_drawing {
+        return matches!(
+            event_type,
+            gdk::EventType::TouchBegin
+                | gdk::EventType::TouchUpdate
+                | gdk::EventType::TouchEnd
+                | gdk::EventType::TouchCancel
+        );
+    }
+
+    // When touch drawing is enabled, reject multi-touch to prevent accidental input
+    // Only check num_touches for touch events to avoid unnecessary calls
+    if matches!(
+        event_type,
+        gdk::EventType::TouchBegin
+            | gdk::EventType::TouchUpdate
+            | gdk::EventType::TouchEnd
+            | gdk::EventType::TouchCancel
+    ) {
+        if let Some(device) = event.device() {
+            return device.num_touches() > 1;
         }
     }
+
     false
 }
 
@@ -366,6 +387,11 @@ fn retrieve_pointer_elements(
     {
         let mut prev_delta = Duration::ZERO;
 
+        // Pre-calculate axis indices to avoid repeated function calls in the loop
+        let x_idx = crate::utils::axis_use_idx(gdk::AxisUse::X);
+        let y_idx = crate::utils::axis_use_idx(gdk::AxisUse::Y);
+        let pressure_idx = crate::utils::axis_use_idx(gdk::AxisUse::Pressure);
+
         let mut entries = vec![];
         for entry in event.history().into_iter().rev() {
             let available_axes = entry.flags();
@@ -391,12 +417,9 @@ fn retrieve_pointer_elements(
             prev_delta = entry_delta;
 
             let axes = entry.axes();
-            let pos = transform_pos(Vector2::new(
-                axes[crate::utils::axis_use_idx(gdk::AxisUse::X)],
-                axes[crate::utils::axis_use_idx(gdk::AxisUse::Y)],
-            ));
+            let pos = transform_pos(Vector2::new(axes[x_idx], axes[y_idx]));
             let pressure = if is_stylus {
-                axes[crate::utils::axis_use_idx(gdk::AxisUse::Pressure)]
+                axes[pressure_idx]
             } else {
                 Element::PRESSURE_DEFAULT
             };
