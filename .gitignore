@@ -1,11 +1,15 @@
 ```
 # Dependencies
 target/
-.cargo/
 
 # Compiled and build artifacts
 **/*.rs.bk
-**/*.rs~
+**/*.rlib
+**/*.so
+**/*.dylib
+**/*.dll
+**/*.exe
+**/*.dSYM/
 
 # Logs and temp files
 *.log
@@ -14,4 +18,9 @@ target/
 # Editors
 .vscode/
 .idea/
+
+# Environment
+.env
+.env.local
+.env.*
 ```
