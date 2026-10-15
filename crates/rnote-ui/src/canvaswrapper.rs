@@ -8,7 +8,7 @@ use gtk4::{
 };
 use once_cell::sync::Lazy;
 use p2d::math::Vector2;
-use rnote_compose::penevent::ShortcutKey;
+use rnote_compose::penevent::{PenProgress, ShortcutKey};
 use rnote_engine::Camera;
 use rnote_engine::ext::GraphenePointExt;
 use std::cell::{Cell, RefCell};
@@ -443,6 +443,12 @@ mod imp {
                     obj,
                     move |_, x, y| {
                         let canvas = canvaswrapper.canvas();
+                        
+                        // Disable canvas panning during active strokes to prevent stroke interruption
+                        if canvas.engine_ref().penholder.current_pen_progress() == PenProgress::InProgress {
+                            return;
+                        }
+                        
                         let new_offset = touch_drag_start.get() - Vector2::new(x, y);
                         let widget_flags = canvas.engine_mut().camera_set_offset_expand(new_offset);
                         canvas.emit_handle_widget_flags(widget_flags);
@@ -497,6 +503,12 @@ mod imp {
                         obj,
                         move |_, x, y| {
                             let canvas = canvaswrapper.canvas();
+                            
+                            // Disable canvas panning during active strokes to prevent stroke interruption
+                            if canvas.engine_ref().penholder.current_pen_progress() == PenProgress::InProgress {
+                                return;
+                            }
+                            
                             let new_offset = mouse_drag_start.get() - Vector2::new(x, y);
                             let widget_flags =
                                 canvas.engine_mut().camera_set_offset_expand(new_offset);
@@ -677,6 +689,12 @@ mod imp {
                     obj,
                     move |_, offset_x, offset_y| {
                         let canvas = canvaswrapper.canvas();
+                        
+                        // Disable canvas panning during active strokes to prevent stroke interruption
+                        if canvas.engine_ref().penholder.current_pen_progress() == PenProgress::InProgress {
+                            return;
+                        }
+                        
                         let new_offset = offset_start.get() - Vector2::new(offset_x, offset_y);
                         let widget_flags = canvas.engine_mut().camera_set_offset_expand(new_offset);
                         canvas.emit_handle_widget_flags(widget_flags);
@@ -775,6 +793,12 @@ mod imp {
                         obj,
                         move |_, offset_x, offset_y| {
                             let canvas = canvaswrapper.canvas();
+                            
+                            // Disable canvas zooming during active strokes to prevent stroke interruption
+                            if canvas.engine_ref().penholder.current_pen_progress() == PenProgress::InProgress {
+                                return;
+                            }
+                            
                             let new_offset = Vector2::new(offset_x, offset_y);
                             let current_total_zoom =
                                 canvaswrapper.canvas().engine_ref().camera.total_zoom();

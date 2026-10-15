@@ -198,6 +198,9 @@ impl RnWorkspaceBrowser {
             .add_action(&workspaceactions::create_folder(self, appwindow));
         self.imp()
             .action_group
+            .add_action(&workspaceactions::create_document(self, appwindow));
+        self.imp()
+            .action_group
             .add_action(&workspaceactions::open_folder(self, appwindow));
     }
 
